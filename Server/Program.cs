@@ -4,67 +4,53 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
 
-//var listener = new Socket(AddressFamily.InterNetwork,
-//                          SocketType.Dgram,
-//                          ProtocolType.Udp);
-
-
-//var ip = IPAddress.Parse("127.0.0.1");
-//var port = 45678;
-//var listenerEP = new IPEndPoint(ip, port);
-
-//listener.Bind(listenerEP);
-
-//var buffer = new byte[ushort.MaxValue - 29];
-//EndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
-
-
-//var count = 0;
-//var msg = string.Empty;
-
-
-
-
-
-
-//while (true)
-//{
-//    var result = await listener.ReceiveFromAsync(new ArraySegment<byte>(buffer),
-//                                                 SocketFlags.None,
-//                                                 remoteEP);
-
-//    count = result.ReceivedBytes;
-//    msg = Encoding.Default.GetString(buffer, 0, count);
-//    Console.WriteLine($"{result.RemoteEndPoint} : {msg}");
-//}
 
 class Program
 {
     static async Task Main()
     {
         Socket udpServer = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        IPEndPoint localEndpoint = new IPEndPoint(IPAddress.Any, 12345);
+        IPEndPoint localEndpoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 12345);
         udpServer.Bind(localEndpoint);
         Console.WriteLine($"Server started on {localEndpoint}");
+        
         while (true)
         {
             EndPoint remoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
-            byte[] receiveBuffer = new byte[1024];
-            var result = await udpServer.ReceiveFromAsync(receiveBuffer, SocketFlags.None, remoteEndpoint) ;
-            Console.WriteLine($"Received request from {remoteEndpoint}");
+            byte[] receiveBuffer = new byte[ushort.MaxValue - 29];
+            var result = await udpServer.ReceiveFromAsync(receiveBuffer, SocketFlags.None, remoteEndpoint);
+            Console.WriteLine($"Received request from {result.RemoteEndPoint}");
 
             Bitmap screenshot = GetScreenshot();
             byte[] imageData = ImageToByteArray(screenshot);
-            await udpServer.SendToAsync(imageData, SocketFlags.None, remoteEndpoint);
-            Console.WriteLine($"Sent screenshot to {remoteEndpoint}");
+
+
+            Console.WriteLine(imageData.Length);
+
+            var chunk = imageData.Chunk(ushort.MaxValue - 29);
+
+            var newBuffer = chunk.ToArray();
+
+            for (int i = 0; i < newBuffer.Length; i++)
+            {
+                await Task.Delay(50);
+                await udpServer.SendToAsync(newBuffer[i], SocketFlags.None, result.RemoteEndPoint);
+            }
+
+            Console.WriteLine($"Sent screenshot to {result.RemoteEndPoint}");
         }
     }
 
     static Bitmap GetScreenshot()
     {
-        Bitmap bitmap = new Bitmap("C:\\Users\\Admin\\Desktop\\c9dea34d94fd90eb00a809be55c9bb44.jpg");
-        return bitmap;
-        
+        Bitmap memoryImage;
+        memoryImage = new Bitmap(1920, 1080);
+
+        Graphics memoryGraphics = Graphics.FromImage(memoryImage);
+        memoryGraphics.CopyFromScreen(0, 0, 0, 0, memoryImage.Size);
+
+        return memoryImage;
+
     }
 
     static byte[] ImageToByteArray(Image image)

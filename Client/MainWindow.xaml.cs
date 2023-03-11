@@ -33,32 +33,51 @@ namespace Client
 
         private async void ReceiveScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
+            var receivedBuffer = new byte[ushort.MaxValue - 29];
+            udpClient.SendTo(receivedBuffer, serverEndpoint);
+            
+            var list = new List<byte>();
+            var len = 0;
+            var totalBytes = 0;
+
+            do
+            {
+                var result = await udpClient.ReceiveFromAsync(receivedBuffer, SocketFlags.None, serverEndpoint);
+                len = result.ReceivedBytes;
+                list.AddRange(receivedBuffer.Take(len));
+                totalBytes += len;
+
+            } while (len == receivedBuffer.Length);
+
             try
             {
-                udpClient.SendTo(new byte[] { 1 }, serverEndpoint);
-                EndPoint remoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
-                byte[] receiveBuffer = new byte[1024];
-                var result = await udpClient.ReceiveFromAsync(receiveBuffer, SocketFlags.None, remoteEndpoint);
-                ImageBox.Source = ByteArrayToImage(receiveBuffer);
+                var image = ByteArrayToImage(list.ToArray());
+                ImageBox.Source = image;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error receiving screenshot: {ex.Message}");
+                MessageBox.Show(ex.Message);
             }
+
         }
 
         private BitmapImage ByteArrayToImage(byte[] byteArray)
         {
-            using (MemoryStream stream = new MemoryStream(byteArray))
+            if (byteArray == null || byteArray.Length == 0) return null;
+            var image = new BitmapImage();
+            using (var mem = new MemoryStream(byteArray))
             {
-                BitmapImage image = new BitmapImage();
+                mem.Position = 0;
                 image.BeginInit();
+                image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
                 image.CacheOption = BitmapCacheOption.OnLoad;
-                image.StreamSource = stream;
+                image.UriSource = null;
+                image.StreamSource = mem;
                 image.EndInit();
-                return image;
             }
+            image.Freeze();
+            return image;
         }
     }
-    }
+}
 
