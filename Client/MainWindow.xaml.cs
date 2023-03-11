@@ -65,19 +65,20 @@ namespace Client
         {
             if (byteArray == null || byteArray.Length == 0) return null;
             var image = new BitmapImage();
-            using (var mem = new MemoryStream(byteArray))
+            using (var m = new MemoryStream(byteArray))
             {
-                mem.Position = 0;
+                m.Position = 0;
                 image.BeginInit();
                 image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
                 image.CacheOption = BitmapCacheOption.OnLoad;
                 image.UriSource = null;
-                image.StreamSource = mem;
+                image.StreamSource = m;
                 image.EndInit();
             }
             image.Freeze();
             return image;
         }
+       
     }
 }
 

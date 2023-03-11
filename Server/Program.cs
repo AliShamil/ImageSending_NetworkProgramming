@@ -33,7 +33,7 @@ class Program
 
             for (int i = 0; i < newBuffer.Length; i++)
             {
-                await Task.Delay(50);
+                await Task.Delay(30);
                 await udpServer.SendToAsync(newBuffer[i], SocketFlags.None, result.RemoteEndPoint);
             }
 
@@ -43,14 +43,13 @@ class Program
 
     static Bitmap GetScreenshot()
     {
-        Bitmap memoryImage;
-        memoryImage = new Bitmap(1920, 1080);
+        Bitmap screenshot;
+        screenshot = new Bitmap(1920, 1080);
 
-        Graphics memoryGraphics = Graphics.FromImage(memoryImage);
-        memoryGraphics.CopyFromScreen(0, 0, 0, 0, memoryImage.Size);
+        Graphics graphics = Graphics.FromImage(screenshot);
+        graphics.CopyFromScreen(0, 0, 0, 0, screenshot.Size);
 
-        return memoryImage;
-
+        return screenshot;
     }
 
     static byte[] ImageToByteArray(Image image)
