@@ -9,10 +9,11 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition/>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
-
+        <ProgressBar Grid.Row="1" Name="LoadingIndicator"></ProgressBar>
         <Image Name="ImageBox" Margin="10"></Image>
-        <Button Grid.Row="1" HorizontalAlignment="Right" Width="200" Margin="5" Click="ReceiveScreenshotButton_Click" >Send Request</Button>
+        <Button  Grid.Row="2" HorizontalAlignment="Right" Width="200" Margin="5" Click="ReceiveScreenshotButton_Click" >Send Request</Button>
     </Grid>
 </Window>

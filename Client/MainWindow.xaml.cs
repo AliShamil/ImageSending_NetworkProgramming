@@ -34,30 +34,44 @@ namespace Client
         private async void ReceiveScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
             var receivedBuffer = new byte[ushort.MaxValue - 29];
-            udpClient.SendTo(receivedBuffer, serverEndpoint);
-            
+            await udpClient.SendToAsync(receivedBuffer, SocketFlags.None, serverEndpoint);
+
+            LoadingIndicator.IsIndeterminate = true;
+
             var list = new List<byte>();
             var len = 0;
             var totalBytes = 0;
-
-            do
-            {
-                var result = await udpClient.ReceiveFromAsync(receivedBuffer, SocketFlags.None, serverEndpoint);
-                len = result.ReceivedBytes;
-                list.AddRange(receivedBuffer.Take(len));
-                totalBytes += len;
-
-            } while (len == receivedBuffer.Length);
-
             try
             {
-                var image = ByteArrayToImage(list.ToArray());
-                ImageBox.Source = image;
+                do
+                {
+                    var result = await udpClient.ReceiveFromAsync(receivedBuffer, SocketFlags.None, serverEndpoint);
+                    len = result.ReceivedBytes;
+                    list.AddRange(receivedBuffer.Take(len));
+                    totalBytes += len;
+
+                } while (len == receivedBuffer.Length);
+
+                try
+                {
+                    var image = ByteArrayToImage(list.ToArray());
+                    ImageBox.Source = image;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
+            finally
+            {
+                
+                LoadingIndicator.IsIndeterminate = false;
+            }
+
 
         }
 

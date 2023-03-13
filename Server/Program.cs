@@ -3,7 +3,7 @@ using System.Net;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
-
+using System.Windows.Forms;
 
 class Program
 {
@@ -24,27 +24,33 @@ class Program
             Bitmap screenshot = GetScreenshot();
             byte[] imageData = ImageToByteArray(screenshot);
 
+            if(imageData.Length / 1024f>=1000)
+                Console.WriteLine($"{(imageData.Length / 1024f)/1024f} mb");
+            else 
+                Console.WriteLine($"{imageData.Length / 1024f} kb");
 
-            Console.WriteLine(imageData.Length);
 
             var chunk = imageData.Chunk(ushort.MaxValue - 29);
 
-            var newBuffer = chunk.ToArray();
+            var buffer = chunk.ToArray();
 
-            for (int i = 0; i < newBuffer.Length; i++)
+            for (int i = 0; i < buffer.Length; i++)
             {
                 await Task.Delay(30);
-                await udpServer.SendToAsync(newBuffer[i], SocketFlags.None, result.RemoteEndPoint);
+                await udpServer.SendToAsync(buffer[i], SocketFlags.None, result.RemoteEndPoint);
             }
 
             Console.WriteLine($"Sent screenshot to {result.RemoteEndPoint}");
+            Console.WriteLine();
+
         }
     }
 
     static Bitmap GetScreenshot()
     {
         Bitmap screenshot;
-        screenshot = new Bitmap(1920, 1080);
+        screenshot = new Bitmap(Screen.PrimaryScreen.Bounds.Width, 
+            Screen.PrimaryScreen.Bounds.Height);
 
         Graphics graphics = Graphics.FromImage(screenshot);
         graphics.CopyFromScreen(0, 0, 0, 0, screenshot.Size);
